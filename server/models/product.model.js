@@ -1,19 +1,17 @@
 const { Schema, model } = require('mongoose')
 
-const userSchema = new Schema(
+const productSchema = new Schema(
 	{
-		email: { type: String, required: true, unique: true },
-		fullName: { type: String, required: true },
-		password: { type: String, required: true },
-		role: { type: String, required: true, default: 'user' },
-		avatar: { type: String },
-		avatarKey: { type: String },
-		isDeleted: { type: Boolean, default: false },
-		deletedAt: { type: Date },
-		favorites: [{ type: Schema.Types.ObjectId, ref: 'Product' }],
-		customerId: { type: String },
+		title: { type: String, required: true },
+		category: { type: String, required: true },
+		price: { type: Number, required: true },
+		description: { type: String, required: true },
+		image: { type: String },
+		imageKey: { type: String },
+		stripePriceId: { type: String },
+		stripeProductId: { type: String },
 	},
 	{ timestamps: true }
 )
 
-module.exports = model('User', userSchema)
+module.exports = model('Product', productSchema)

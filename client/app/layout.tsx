@@ -1,3 +1,4 @@
+import SessionProvider from '@/components/providers/session.provider'
 import Navbar from '@/components/shared/navbar'
 import { Toaster } from '@/components/ui/sonner'
 import { ChildProps } from '@/types'
@@ -24,15 +25,17 @@ export const metadata: Metadata = {
 
 const RootLayout: FC<ChildProps> = ({ children }) => {
 	return (
-		<html lang='en' suppressHydrationWarning={true}>
-			<body className={`${geistMono.className} antialiased`}>
-				<Navbar />
-				<main className='container max-w-7xl mt-24 mx-auto px-5'>
-					{children}
-				</main>
-				<Toaster />
-			</body>
-		</html>
+		<SessionProvider>
+			<html lang='en' suppressHydrationWarning={true}>
+				<body className={`${geistMono.className} antialiased`}>
+					<Navbar />
+					<main className='container max-w-7xl mt-24 mx-auto px-5'>
+						{children}
+					</main>
+					<Toaster position='top-center' richColors theme='light' />
+				</body>
+			</html>
+		</SessionProvider>
 	)
 }
 

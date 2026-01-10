@@ -9,7 +9,6 @@ type ToastProps = {
 	title?: React.ReactNode
 	description?: React.ReactNode
 	action?: ToastActionElement
-	// xohlasangiz keyin variant/duration qo‘shasiz
 	duration?: number
 }
 
