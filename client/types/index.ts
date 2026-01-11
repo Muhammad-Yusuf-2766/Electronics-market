@@ -22,6 +22,7 @@ export interface IProduct {
 export interface ReturnActionType {
 	user: IUser
 	failure: string
+	status: number
 }
 
 export interface IUser {

@@ -15,6 +15,15 @@ export const registerSchema = z.object({
 		.min(6, { message: 'Password must be at least 6 characters' }),
 })
 
+export const verifyOtpSchema = z.object({
+	otp: z.string().length(6, { message: 'OTP must be 6 characters' }),
+	email: z.string().email({ message: 'Invalid email' }),
+})
+
+export const otpSchema = z.object({
+	otp: z.string().length(6, { message: 'OTP must be 6 characters' }),
+})
+
 export const fullNameSchema = z.object({
 	fullName: z
 		.string()

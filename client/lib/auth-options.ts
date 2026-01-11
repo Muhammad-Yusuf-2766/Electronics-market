@@ -9,17 +9,22 @@ const authOptions: NextAuthOptions = {
 			name: 'Credentials',
 			credentials: { userId: { label: 'User ID', type: 'text' } },
 			async authorize(credentials) {
-				const {data} = await axiosClient.get<ReturnActionType>(`/user/profile/${credentials?.userId}`)
-				return JSON.parse(JSON.stringify({ email: data.user.email, name: data.user._id}))
+				const { data } = await axiosClient.get<ReturnActionType>(
+					`/user/profile/${credentials?.userId}`
+				)
+				return JSON.parse(
+					JSON.stringify({ email: data.user.email, name: data.user._id })
+				)
 			},
 		}),
 	],
 
 	callbacks: {
 		async session({ session }) {
-			const {data} = await axiosClient.get<ReturnActionType>(`/user/profile/${session.user?.name}`)
+			const { data } = await axiosClient.get<ReturnActionType>(
+				`/user/profile/${session.user?.name}`
+			)
 			session.currentUser = data.user
-			console.log(session)
 			return session
 		},
 	},
