@@ -80,6 +80,7 @@ const Filter = ({ showCategory = true }: Props) => {
 		>
 			<div className='flex items-center bg-secondary max-md:w-1/2 border'>
 				<Input
+					type='text'
 					placeholder='Qidirish'
 					className='text-xs border-none no-focus'
 					onChange={handleSearchDebounce}

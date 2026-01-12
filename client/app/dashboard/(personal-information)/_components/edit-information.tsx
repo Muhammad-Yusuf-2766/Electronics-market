@@ -33,6 +33,7 @@ const EditInformation = () => {
 					<Dialog>
 						<DialogTrigger asChild>
 							<Button
+								type='button'
 								size={'icon'}
 								className='absolute right-0 bottom-0 rounded-full border border-primary'
 								variant={'secondary'}

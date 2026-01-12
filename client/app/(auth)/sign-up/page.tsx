@@ -234,7 +234,7 @@ const SignUpPage = () => {
 			<div className='mt-4'>
 				<div className='text-sm text-muted-foreground'>
 					Already have an account?{' '}
-					<Button asChild variant={'link'} className='p-0'>
+					<Button asChild variant={'link'} className='p-0' type='button'>
 						<Link href='/sign-in'>Sign in</Link>
 					</Button>
 				</div>

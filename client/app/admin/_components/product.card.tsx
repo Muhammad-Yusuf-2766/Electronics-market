@@ -62,12 +62,14 @@ const ProductCard: FC<Props> = ({ product }) => {
 			</div>
 
 			<div className='grid grid-cols-2 gap-2 px-2 pb-2'>
-				<Button variant={'secondary'} onClick={onEdit}>
+				<Button type='button' variant={'secondary'} onClick={onEdit}>
 					Edit
 				</Button>
 				<AlertDialog>
 					<AlertDialogTrigger asChild>
-						<Button variant={'outline'}>Delete</Button>
+						<Button type='button' variant={'outline'}>
+							Delete
+						</Button>
 					</AlertDialogTrigger>
 					<AlertDialogContent>
 						<AlertDialogHeader>

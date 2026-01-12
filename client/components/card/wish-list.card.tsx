@@ -27,7 +27,7 @@ const WishListCard: FC<Props> = ({ product }) => {
 					alt={product.title!}
 				/>
 				<div className='absolute right-0 top-0 z-50 flex items-center'>
-					<Button size={'icon'}>
+					<Button type='button' size={'icon'}>
 						<Heart className='text-red-500 fill-red-500' />
 					</Button>
 				</div>

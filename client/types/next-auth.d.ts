@@ -3,7 +3,7 @@ import { IUser } from '.'
 
 declare module 'next-auth' {
 	interface Session {
-		currentUser?: IUser
+		currentUser: IUser
 		user: {} & DefaultSession['user']
 	}
 }

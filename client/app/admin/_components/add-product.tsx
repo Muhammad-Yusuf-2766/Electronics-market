@@ -1,5 +1,6 @@
 'use client'
 
+import { createProduct, deleteFile } from '@/actions/admin.action'
 import { Button } from '@/components/ui/button'
 import {
 	Form,
@@ -26,17 +27,22 @@ import {
 	SheetTitle,
 } from '@/components/ui/sheet'
 import { Textarea } from '@/components/ui/textarea'
+import useAction from '@/hooks/use-action'
 import { useProduct } from '@/hooks/use-product'
 import { categories } from '@/lib/constants'
+import { UploadDropzone } from '@/lib/uploadthing'
 import { formatPrice } from '@/lib/utils'
 import { productSchema } from '@/lib/validation'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { PlusCircle } from 'lucide-react'
+import { Loader, PlusCircle, X } from 'lucide-react'
+import Image from 'next/image'
 import { useForm } from 'react-hook-form'
+import { toast } from 'sonner'
 import { z } from 'zod'
 
 const AddProduct = () => {
-	const { open, setOpen } = useProduct()
+	const { isLoading, setIsLoading, onError } = useAction()
+	const { open, setOpen } = useProduct() // custom hook for controlling create-product sheet
 
 	const form = useForm<z.infer<typeof productSchema>>({
 		resolver: zodResolver(productSchema),
@@ -49,28 +55,56 @@ const AddProduct = () => {
 			imageKey: '',
 		},
 	})
-
-	async function onSubmit(values: z.infer<typeof productSchema>) {}
+	const watchPrice = form.watch('price')
+	const watchImage = form.watch('image')
 
 	function onOpen() {
 		setOpen(true)
 	}
 
+	async function onSubmit(values: z.infer<typeof productSchema>) {
+		if (!form.watch('image')) return toast.error('Please upload an image')
+		setIsLoading(true)
+		const res = await createProduct(values)
+		console.log(res)
+		if (res?.serverError || res?.validationErrors || !res?.data) {
+			return onError('Something went wrong... :(')
+		}
+
+		if (res?.data?.failure) {
+			return onError(res.data.failure)
+		}
+		if (res.data.status === 201) {
+			toast.success('Product created successfully.')
+			setOpen(false)
+			setIsLoading(false)
+		}
+
+		form.reset()
+		setIsLoading(false)
+	}
+
+	function onDeleteImage() {
+		deleteFile(form.getValues('imageKey'))
+		form.setValue('image', '')
+		form.setValue('imageKey', '')
+	}
+
 	return (
 		<>
-			<Button size={'sm'} onClick={onOpen}>
+			<Button type='button' size={'sm'} onClick={onOpen}>
 				<span>Add Product</span>
 				<PlusCircle />
 			</Button>
 			<Sheet open={open} onOpenChange={setOpen}>
-				<SheetContent>
+				<SheetContent className='overflow-y-auto pb-5'>
 					<SheetHeader>
 						<SheetTitle>Manage your product</SheetTitle>
 						<SheetDescription>
 							Field marked with * are required fields and must be filled.
 						</SheetDescription>
 					</SheetHeader>
-					<Separator className='my-3' />
+					<Separator className='my-1' />
 					<Form {...form}>
 						<form
 							onSubmit={form.handleSubmit(onSubmit)}
@@ -84,6 +118,7 @@ const AddProduct = () => {
 										<Label className='text-xs'>Title</Label>
 										<FormControl>
 											<Input
+												disabled={isLoading}
 												placeholder='Adidas shoes'
 												className='bg-secondary'
 												{...field}
@@ -101,6 +136,7 @@ const AddProduct = () => {
 										<Label className='text-xs'>Description</Label>
 										<FormControl>
 											<Textarea
+												disabled={isLoading}
 												placeholder='Adidas shoes are the best shoes in the world'
 												className='bg-secondary'
 												{...field}
@@ -117,6 +153,7 @@ const AddProduct = () => {
 									<FormItem className='space-y-0'>
 										<Label className='text-xs'>Cateogry</Label>
 										<Select
+											disabled={isLoading}
 											onValueChange={field.onChange}
 											defaultValue={field.value}
 										>
@@ -143,12 +180,13 @@ const AddProduct = () => {
 								render={({ field }) => (
 									<FormItem className='space-y-0'>
 										<Label className='text-xs'>
-											{!form.watch('price')
+											{!watchPrice
 												? 'Price'
-												: `Price ${formatPrice(Number(form.watch('price')))} `}
+												: `Price ${formatPrice(Number(watchPrice))} `}
 										</Label>
 										<FormControl>
 											<Input
+												disabled={isLoading}
 												placeholder='100.000 UZS'
 												type='number'
 												className='bg-secondary'
@@ -159,8 +197,39 @@ const AddProduct = () => {
 									</FormItem>
 								)}
 							/>
-							<Button type='submit' className='w-full'>
-								Submit
+							{watchImage && (
+								<div className='w-full h-50 bg-secondary flex justify-center items-center relative'>
+									<Image
+										src={watchImage}
+										fill
+										objectFit='cover'
+										alt='product image'
+									/>
+									<Button
+										variant={'destructive'}
+										className='absolute top-0 right-0'
+										type='button'
+										onClick={onDeleteImage}
+									>
+										<X />
+									</Button>
+								</div>
+							)}
+							{!watchImage && (
+								<UploadDropzone
+									className='rounded-none'
+									endpoint={'imageUploader'}
+									onClientUploadComplete={res => {
+										form.setValue('image', res[0].ufsUrl)
+										form.setValue('imageKey', res[0].key)
+									}}
+									config={{ appendOnPaste: true, mode: 'auto' }}
+									appearance={{ container: { height: 200, padding: 10 } }}
+								/>
+							)}
+
+							<Button type='submit' className='w-full' disabled={isLoading}>
+								Submit {isLoading && <Loader className='animate-spin' />}
 							</Button>
 						</form>
 					</Form>

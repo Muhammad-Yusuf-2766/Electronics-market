@@ -17,6 +17,7 @@ const Sidebar = () => {
 			<div className='flex flex-col mt-4 space-y-3'>
 				{dashboardSidebar.map(item => (
 					<Button
+						type='button'
 						key={item.route}
 						asChild
 						variant={pathname == item.route ? 'secondary' : 'ghost'}

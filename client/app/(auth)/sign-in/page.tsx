@@ -23,7 +23,7 @@ import { toast } from 'sonner'
 import { z } from 'zod'
 
 const SignInPage = () => {
- const [isLoading, setIsLoading] = useState(false)
+	const [isLoading, setIsLoading] = useState(false)
 
 	const form = useForm<z.infer<typeof loginSchema>>({
 		resolver: zodResolver(loginSchema),
@@ -38,19 +38,18 @@ const SignInPage = () => {
 	async function onSubmit(values: z.infer<typeof loginSchema>) {
 		setIsLoading(true)
 		const res = await login(values)
-		if(res?.serverError || res?.validationErrors || !res?.data) {
+		if (res?.serverError || res?.validationErrors || !res?.data) {
 			return onError('Something went wrong... :(')
 		}
 
-		if(res?.data?.failure) {
+		if (res?.data?.failure) {
 			return onError(res.data.failure)
 		}
 
-		if(res?.data?.user) {
+		if (res?.data?.user) {
 			toast.success('Logged in successfully')
-			signIn('credentials', {userId: res.data.user._id, callbackUrl: '/'})
+			signIn('credentials', { userId: res.data.user._id, callbackUrl: '/' })
 		}
-		
 	}
 
 	return (
@@ -69,7 +68,11 @@ const SignInPage = () => {
 							<FormItem className='space-y-0'>
 								<Label>Email</Label>
 								<FormControl>
-									<Input placeholder='example@gmial.com' disabled={isLoading} {...field} />
+									<Input
+										placeholder='example@gmial.com'
+										disabled={isLoading}
+										{...field}
+									/>
 								</FormControl>
 								<FormMessage className='text-xs text-red-500' />
 							</FormItem>
@@ -82,20 +85,27 @@ const SignInPage = () => {
 							<FormItem className='space-y-0'>
 								<Label>Password</Label>
 								<FormControl>
-									<Input  disabled={isLoading} placeholder='****' type='password' {...field} />
+									<Input
+										disabled={isLoading}
+										placeholder='****'
+										type='password'
+										{...field}
+									/>
 								</FormControl>
 								<FormMessage className='text-xs text-red-500' />
 							</FormItem>
 						)}
 					/>
-					<Button disabled={isLoading} type='submit'>Submit</Button>
+					<Button disabled={isLoading} type='submit'>
+						Submit
+					</Button>
 				</form>
 			</Form>
 
 			<div className='mt-4'>
 				<div className='text-sm text-muted-foreground'>
 					Don&apos;t have an account?{' '}
-					<Button  variant={'link'} className='p-0'>
+					<Button type='button' variant={'link'} className='p-0'>
 						<Link href='/sign-up'>Sign up</Link>
 					</Button>
 				</div>

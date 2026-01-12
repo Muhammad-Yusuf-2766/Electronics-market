@@ -10,13 +10,13 @@ const CreateOrderButton = () => {
 	return (
 		<Popover>
 			<PopoverTrigger asChild>
-				<Button className='w-fit' size={'lg'}>
+				<Button type='button' className='w-fit' size={'lg'}>
 					Purchase
 				</Button>
 			</PopoverTrigger>
 			<PopoverContent className='p-1 w-56' side='right'>
 				<div className='flex flex-col space-y-1'>
-					<Button variant={'secondary'}>
+					<Button type='button' variant={'secondary'}>
 						<Image
 							src={'/stripe.svg'}
 							alt='stripe'
@@ -25,7 +25,7 @@ const CreateOrderButton = () => {
 							className='cursor-pointer'
 						/>
 					</Button>
-					<Button variant={'secondary'}>
+					<Button type='button' variant={'secondary'}>
 						<Image
 							src={'/click.svg'}
 							alt=''
@@ -34,7 +34,7 @@ const CreateOrderButton = () => {
 							className='cursor-pointer'
 						/>
 					</Button>
-					<Button variant={'secondary'}>
+					<Button type='button' variant={'secondary'}>
 						<Image
 							src={'/payme.svg'}
 							alt='stripe'
@@ -43,7 +43,7 @@ const CreateOrderButton = () => {
 							className='cursor-pointer'
 						/>
 					</Button>
-					<Button variant={'secondary'}>
+					<Button type='button' variant={'secondary'}>
 						<Image
 							src={'/uzum.svg'}
 							alt='stripe'

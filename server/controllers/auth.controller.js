@@ -16,13 +16,13 @@ class AuthController {
 			next(error)
 		}
 	}
+
 	async register(req, res, next) {
 		try {
 			const { email, password, fullName } = req.body
 
 			const user = await userModel.findOne({ email })
 			if (user) return res.json({ failure: 'User already exists' })
-
 			const hashedPassword = await bcrypt.hash(password, 10)
 			const newUser = await userModel.create({
 				email,
