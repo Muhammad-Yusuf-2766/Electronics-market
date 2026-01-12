@@ -1,6 +1,10 @@
 'use client'
 
-import { createProduct, deleteFile } from '@/actions/admin.action'
+import {
+	createProduct,
+	deleteFile,
+	updateProduct,
+} from '@/actions/admin.action'
 import { Button } from '@/components/ui/button'
 import {
 	Form,
@@ -36,13 +40,14 @@ import { productSchema } from '@/lib/validation'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Loader, PlusCircle, X } from 'lucide-react'
 import Image from 'next/image'
+import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import { z } from 'zod'
 
 const AddProduct = () => {
 	const { isLoading, setIsLoading, onError } = useAction()
-	const { open, setOpen } = useProduct() // custom hook for controlling create-product sheet
+	const { open, setOpen, product, setProduct } = useProduct() // custom hook for controlling create-product sheet
 
 	const form = useForm<z.infer<typeof productSchema>>({
 		resolver: zodResolver(productSchema),
@@ -60,13 +65,27 @@ const AddProduct = () => {
 
 	function onOpen() {
 		setOpen(true)
+		setProduct({
+			_id: '',
+			title: '',
+			description: '',
+			category: '',
+			price: 0,
+			image: '',
+			imageKey: '',
+		})
 	}
 
 	async function onSubmit(values: z.infer<typeof productSchema>) {
-		if (!form.watch('image')) return toast.error('Please upload an image')
+		if (!watchImage) return toast.error('Please upload an image')
 		setIsLoading(true)
-		const res = await createProduct(values)
-		console.log(res)
+		let res
+		if (product?._id) {
+			res = await updateProduct({ ...values, id: product._id })
+		} else {
+			res = await createProduct(values)
+		}
+
 		if (res?.serverError || res?.validationErrors || !res?.data) {
 			return onError('Something went wrong... :(')
 		}
@@ -76,12 +95,16 @@ const AddProduct = () => {
 		}
 		if (res.data.status === 201) {
 			toast.success('Product created successfully.')
+			form.reset()
 			setOpen(false)
 			setIsLoading(false)
 		}
-
-		form.reset()
-		setIsLoading(false)
+		if (res.data.status === 200) {
+			toast.success('Product updated successfully.')
+			form.reset()
+			setOpen(false)
+			setIsLoading(false)
+		}
 	}
 
 	function onDeleteImage() {
@@ -89,6 +112,12 @@ const AddProduct = () => {
 		form.setValue('image', '')
 		form.setValue('imageKey', '')
 	}
+
+	useEffect(() => {
+		if (product) {
+			form.reset({ ...product, price: product.price.toString() })
+		}
+	}, [product])
 
 	return (
 		<>

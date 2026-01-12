@@ -4,7 +4,12 @@ import { axiosClient } from '@/http/axios'
 import authOptions from '@/lib/auth-options'
 import { generateToken } from '@/lib/generate-token'
 import { actionClient } from '@/lib/safe-action'
-import { productSchema } from '@/lib/validation'
+import {
+	idSchema,
+	productSchema,
+	searchParamsSchema,
+	updateProductSchema,
+} from '@/lib/validation'
 import { ReturnActionType } from '@/types'
 import { getServerSession } from 'next-auth'
 import { revalidatePath } from 'next/cache'
@@ -35,8 +40,9 @@ export const createProduct = actionClient
 		return JSON.parse(JSON.stringify(data))
 	})
 
-export const getProducts = actionClient.action<ReturnActionType>(
-	async ({ parsedInput }) => {
+export const getProducts = actionClient
+	.inputSchema(searchParamsSchema)
+	.action<ReturnActionType>(async ({ parsedInput }) => {
 		const session = await getServerSession(authOptions)
 		if (!session?.currentUser) {
 			throw new Error('Current user is not found, please login.')
@@ -48,5 +54,39 @@ export const getProducts = actionClient.action<ReturnActionType>(
 		})
 
 		return JSON.parse(JSON.stringify(data))
-	}
-)
+	})
+
+export const updateProduct = actionClient
+	.inputSchema(updateProductSchema)
+	.action<ReturnActionType>(async ({ parsedInput }) => {
+		const session = await getServerSession(authOptions)
+		if (!session?.currentUser) {
+			throw new Error('Current user is not found, please login.')
+		}
+		const token = await generateToken(session?.currentUser?._id)
+		const { data } = await axiosClient.put(
+			`/admin/update-product/${parsedInput.id}`,
+			{ ...parsedInput, price: parseFloat(parsedInput.price) },
+			{ headers: { Authorization: `Bearer ${token}` } }
+		)
+		revalidatePath('/admin/products')
+		return JSON.parse(JSON.stringify(data))
+	})
+
+export const deleteProduct = actionClient
+	.inputSchema(idSchema)
+	.action<ReturnActionType>(async ({ parsedInput }) => {
+		const session = await getServerSession(authOptions)
+		if (!session?.currentUser) {
+			throw new Error('Current user is not found, please login.')
+		}
+		const token = await generateToken(session?.currentUser?._id)
+		const { data } = await axiosClient.delete(
+			`/admin/delete-product/${parsedInput.id}`,
+			{
+				headers: { Authorization: `Bearer ${token}` },
+			}
+		)
+		revalidatePath('/admin/products')
+		return JSON.parse(JSON.stringify(data))
+	})
