@@ -56,6 +56,36 @@ export const getProducts = actionClient
 		return JSON.parse(JSON.stringify(data))
 	})
 
+export const getCustomers = actionClient
+	.inputSchema(searchParamsSchema)
+	.action<ReturnActionType>(async ({ parsedInput }) => {
+		const session = await getServerSession(authOptions)
+		if (!session?.currentUser) {
+			throw new Error('Current user is not found, please login.')
+		}
+		const token = await generateToken(session?.currentUser?._id)
+		const { data } = await axiosClient.get('/admin/customers', {
+			headers: { Authorization: `Bearer ${token}` },
+			params: parsedInput,
+		})
+		return JSON.parse(JSON.stringify(data))
+	})
+
+export const getOrders = actionClient
+	.inputSchema(searchParamsSchema)
+	.action<ReturnActionType>(async ({ parsedInput }) => {
+		const session = await getServerSession(authOptions)
+		if (!session?.currentUser) {
+			throw new Error('Current user is not found, please login.')
+		}
+		const token = await generateToken(session?.currentUser?._id)
+		const { data } = await axiosClient.get('/admin/orders', {
+			headers: { Authorization: `Bearer ${token}` },
+			params: parsedInput,
+		})
+		return JSON.parse(JSON.stringify(data))
+	})
+
 export const updateProduct = actionClient
 	.inputSchema(updateProductSchema)
 	.action<ReturnActionType>(async ({ parsedInput }) => {

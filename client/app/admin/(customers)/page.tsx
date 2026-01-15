@@ -1,4 +1,6 @@
+import { getCustomers } from '@/actions/admin.action'
 import Filter from '@/components/shared/filter'
+import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import {
 	Table,
@@ -10,7 +12,27 @@ import {
 	TableRow,
 } from '@/components/ui/table'
 
-const Page = () => {
+import { SearchParams } from '@/types'
+
+import Pagination from '@/components/shared/pagination'
+import { FC } from 'react'
+import { formatPrice } from '../../../lib/utils'
+
+interface Props {
+	searchParams: SearchParams
+}
+
+const Page: FC<Props> = async props => {
+	const searchParams = await props.searchParams
+
+	const res = await getCustomers({
+		searchQuery: `${searchParams.q || ''}`,
+		filter: `${searchParams.filter || ''}`,
+		page: `${searchParams.page || '1'}`,
+	})
+
+	const customers = res.data?.customers
+	const isNext = res.data?.isNext || false
 	return (
 		<>
 			<div className='flex justify-between items-center w-full'>
@@ -33,16 +55,43 @@ const Page = () => {
 					</TableRow>
 				</TableHeader>
 				<TableBody>
-					<TableRow>
-						<TableCell>1</TableCell>
-						<TableCell>info@sammi.ac</TableCell>
-						<TableCell>Samar Badriddinov</TableCell>
-						<TableCell>12</TableCell>
-						<TableCell>Active</TableCell>
-						<TableCell className='text-right'>$1200</TableCell>
-					</TableRow>
+					{customers && customers.length === 0 && (
+						<TableRow>
+							<TableCell colSpan={6} className='text-center'>
+								No customers found
+							</TableCell>
+						</TableRow>
+					)}
+					{customers &&
+						customers.map((customer, index) => (
+							<TableRow key={customer._id}>
+								<TableCell>No:{index + 1}</TableCell>
+								<TableCell>{customer.email}</TableCell>
+								<TableCell>{customer.fullName}</TableCell>
+								<TableCell>
+									<Badge>{customer.orderCount}</Badge>
+								</TableCell>
+								<TableCell>
+									<Badge
+										variant={customer.isDeleted ? 'destructive' : 'secondary'}
+									>
+										{customer.isDeleted ? 'Deleted' : 'Active'}
+									</Badge>
+								</TableCell>
+								<TableCell className='text-right'>
+									<Badge variant={'outline'}>
+										{formatPrice(customer.totalPrice)}
+									</Badge>
+								</TableCell>
+							</TableRow>
+						))}
 				</TableBody>
 			</Table>
+
+			<Pagination
+				isNext={isNext}
+				pageNumber={searchParams?.page ? +searchParams.page : 1}
+			/>
 		</>
 	)
 }
