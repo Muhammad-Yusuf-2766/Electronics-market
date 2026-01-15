@@ -9,6 +9,7 @@ router.get('/orders', adminController.getOrders)
 router.get('/transactions', adminController.getTransactions)
 
 router.post('/create-product', adminController.createProduct)
+// router.post('/create-order', adminController.createOrder)
 
 router.put('/update-product/:id', adminController.updateProduct)
 router.put('/update-order/:id', adminController.updateOrder)
