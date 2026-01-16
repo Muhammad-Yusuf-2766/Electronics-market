@@ -1,5 +1,6 @@
 'use client'
 
+import { updatePassword, updateUser } from '@/actions/user.action'
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -21,20 +22,54 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
+import useAction from '@/hooks/use-action'
 import { passwordSchema } from '@/lib/validation'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Label } from '@radix-ui/react-label'
+import { Loader } from 'lucide-react'
+import { signOut } from 'next-auth/react'
 import { useForm } from 'react-hook-form'
+import { toast } from 'sonner'
 import { z } from 'zod'
 
 const Page = () => {
+	const { isLoading, onError, setIsLoading } = useAction()
+
 	const form = useForm<z.infer<typeof passwordSchema>>({
 		resolver: zodResolver(passwordSchema),
 		defaultValues: { confirmPassword: '', newPassword: '', oldPassword: '' },
 	})
 
+	async function onDelete() {
+		setIsLoading(true)
+		const res = await updateUser({ isDeleted: true, deletedAt: new Date() })
+		if (res?.serverError || res?.validationErrors || !res?.data) {
+			return onError('Something went wrong')
+		}
+		if (res.data.failure) {
+			return onError(res.data.failure)
+		}
+		if (res.data.status === 200) {
+			toast('Account deleted successfully')
+			setIsLoading(false)
+			signOut({ callbackUrl: '/sign-up' })
+		}
+	}
+
 	async function onSubmit(values: z.infer<typeof passwordSchema>) {
-		console.log(values)
+		setIsLoading(true)
+		const res = await updatePassword(values)
+		if (res?.serverError || res?.validationErrors || !res?.data) {
+			return onError('Something went wrong')
+		}
+		if (res.data.failure) {
+			return onError(res.data.failure)
+		}
+		if (res.data.status === 200) {
+			toast.success('Password updated successfully')
+			setIsLoading(false)
+			form.reset()
+		}
 	}
 
 	return (
@@ -62,8 +97,10 @@ const Page = () => {
 							</AlertDialogDescription>
 						</AlertDialogHeader>
 						<AlertDialogFooter>
-							<AlertDialogCancel>Cancel</AlertDialogCancel>
-							<AlertDialogAction>Continue</AlertDialogAction>
+							<AlertDialogCancel disabled={isLoading}>Cancel</AlertDialogCancel>
+							<AlertDialogAction onClick={onDelete} disabled={isLoading}>
+								Continue
+							</AlertDialogAction>
 						</AlertDialogFooter>
 					</AlertDialogContent>
 				</AlertDialog>
@@ -127,7 +164,14 @@ const Page = () => {
 									</FormItem>
 								)}
 							/>
-							<Button type='submit'>Submit</Button>
+							<Button
+								type='submit'
+								className='self-end mb-0.5'
+								size={'sm'}
+								disabled={isLoading}
+							>
+								Submit {isLoading && <Loader className='animate-spin' />}
+							</Button>
 						</form>
 					</Form>
 				</div>

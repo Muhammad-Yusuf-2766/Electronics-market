@@ -1,5 +1,6 @@
 'use client'
 
+import { updateUser } from '@/actions/user.action'
 import { Button } from '@/components/ui/button'
 import {
 	Form,
@@ -10,19 +11,43 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import useAction from '@/hooks/use-action'
 import { fullNameSchema } from '@/lib/validation'
+import { IUser } from '@/types'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { Loader } from 'lucide-react'
+import { useSession } from 'next-auth/react'
+import { FC } from 'react'
 import { useForm } from 'react-hook-form'
+import { toast } from 'sonner'
 import { z } from 'zod'
 
-const FullNameForm = () => {
+interface Props {
+	user: IUser
+}
+const FullNameForm: FC<Props> = ({ user }) => {
+	const { update } = useSession()
+	const { isLoading, onError, setIsLoading } = useAction()
+
 	const form = useForm<z.infer<typeof fullNameSchema>>({
 		resolver: zodResolver(fullNameSchema),
-		defaultValues: { fullName: '' },
+		defaultValues: { fullName: user.fullName },
 	})
 
 	async function onSubmit(values: z.infer<typeof fullNameSchema>) {
-		console.log(values)
+		setIsLoading(true)
+		const res = await updateUser(values)
+		if (res?.serverError || res?.validationErrors || !res?.data) {
+			return onError('Something went wrong')
+		}
+		if (res.data.failure) {
+			return onError(res.data.failure)
+		}
+		if (res.data.status === 200) {
+			toast.success('Full name updated successfully')
+			update()
+			setIsLoading(false)
+		}
 	}
 
 	return (
@@ -38,6 +63,7 @@ const FullNameForm = () => {
 								<Input
 									placeholder='Osman Ali'
 									className='bg-white'
+									disabled={isLoading}
 									{...field}
 								/>
 							</FormControl>
@@ -45,8 +71,13 @@ const FullNameForm = () => {
 						</FormItem>
 					)}
 				/>
-				<Button type='submit' className='self-end mb-0.5' size={'sm'}>
-					Submit
+				<Button
+					type='submit'
+					className='self-end mb-0.5'
+					size={'sm'}
+					disabled={isLoading}
+				>
+					Submit {isLoading && <Loader className='animate-spin' />}
 				</Button>
 			</form>
 		</Form>

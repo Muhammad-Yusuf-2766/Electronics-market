@@ -9,13 +9,17 @@ router.get('/profile/:id', userController.getProfile)
 router.get('/orders', userController.getOrders)
 router.get('/transactions', userController.getTransactions)
 router.get('/favorites', userController.getFavorites)
-router.get('/statistics', userController.getStatistics)
+router.get('/statistics', userMiddleware, userController.getStatistics)
 
 router.post('/add-favorite', userMiddleware, userController.addFavorite)
 
-router.put('/update-profile', userController.updateProfile)
-router.put('/update-password', userController.updatePassword)
+router.put('/update-profile', userMiddleware, userController.updateProfile)
+router.put('/update-password', userMiddleware, userController.updatePassword)
 
-router.delete('/delete-favorite/:id', userController.deleteFavorite)
+router.delete(
+	'/delete-favorite/:id',
+	userMiddleware,
+	userController.deleteFavorite
+)
 
 module.exports = router
