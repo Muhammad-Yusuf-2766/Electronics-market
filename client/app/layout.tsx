@@ -26,7 +26,7 @@ export const metadata: Metadata = {
 const RootLayout: FC<ChildProps> = ({ children }) => {
 	return (
 		<SessionProvider>
-			<html lang='en' suppressHydrationWarning={true} className='dark'>
+			<html lang='en' suppressHydrationWarning={true}>
 				<body className={`${geistMono.className} antialiased`}>
 					<Navbar />
 					<main className='container max-w-7xl mt-24 mx-auto px-5'>

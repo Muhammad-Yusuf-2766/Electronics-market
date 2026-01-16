@@ -5,6 +5,7 @@ export interface ChildProps {
 export type SearchParams = Promise<{
 	[key: string]: string | string[] | undefined
 }>
+export type Params = Promise<{ productId: string }>
 
 export interface QueryProps {
 	params: string
@@ -28,8 +29,10 @@ export interface ReturnActionType {
 	status: number
 	isNext: boolean
 	products: IProduct[]
+	product: IProduct
 	customers: IUser[]
 	orders: IOrder[]
+	transactions: ITransactions[]
 }
 
 export interface IUser {
@@ -55,4 +58,18 @@ export interface IOrder {
 	status: boolean
 	createdAt: Date
 	updatedAt: Date
+}
+
+export interface ITransactions {
+	id: string
+	user: IUser
+	product: IProduct
+	state: number
+	amount: number
+	create_time: number
+	perform_time: number
+	cancel_time: number
+	reason: number
+	provider: string
+	prepare_id: string
 }
