@@ -36,7 +36,9 @@ const Page: FC<Props> = async props => {
 
 			<div className='grid grid-cols-1 md:grid-cols-3 gap-4 mt-3'>
 				{products && products.length === 0 && (
-					<p className='text-muted-foreground'>No products found</p>
+					<p className='text-muted-foreground col-span-3 text-center'>
+						No products found
+					</p>
 				)}
 				{products?.map(product => (
 					<ProductCard key={product._id} product={product} />

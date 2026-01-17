@@ -8,7 +8,6 @@ class UserController {
 	// [GET] /user/products
 	async getProducts(req, res, next) {
 		try {
-			console.log('REQ: getproducts')
 			const { searchQuery, filter, category, page, pageSize } = req.query
 			const skipAmount = (+page - 1) * +pageSize
 			const query = {}

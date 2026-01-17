@@ -2,6 +2,7 @@ const userModel = require('../models/user.model')
 const productModel = require('../models/product.model')
 const orderModel = require('../models/order.model')
 const transactionModel = require('../models/transaction.model')
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY)
 
 class AdminController {
 	constructor() {}
@@ -248,10 +249,36 @@ class AdminController {
 	// [POST] /admin/create-product
 	async createProduct(req, res, next) {
 		try {
+			const userId = req.user._id
 			const data = req.body
 			const newProduct = await productModel.create(data)
 			if (!newProduct)
 				return res.json({ failure: 'Failed while creating product' })
+
+			const product = await stripe.products.create({
+				name: newProduct.title,
+				images: [newProduct.image],
+				metadata: {
+					productId: newProduct._id.toString(),
+					userId: userId.toString(),
+				},
+			})
+			const exchangeRate = 19700 // Bu USD ni UZS ga nisbati. 18.01.2026 shu sanada.
+			const amountInUSD = newProduct.price / exchangeRate
+			const price = await stripe.prices.create({
+				product: product.id,
+				unit_amount: amountInUSD.toFixed(0) * 100, // toFixed(0) kasr sonlarni butun songa aylantiradi.
+				currency: 'usd',
+				metadata: {
+					productId: newProduct._id.toString(),
+					userId: userId.toString(),
+				},
+			})
+
+			await productModel.findByIdAndUpdate(newProduct._id, {
+				stripeProductId: product.id,
+				stripePriceId: price.id,
+			})
 			return res.json({ status: 201 })
 		} catch (error) {
 			next(error)
@@ -272,11 +299,27 @@ class AdminController {
 	// [PUT] /admin/update-product/:id
 	async updateProduct(req, res, next) {
 		try {
+			const userId = req.user._id
 			const data = req.body
 			const { id } = req.params
 			const updatedProduct = await productModel.findByIdAndUpdate(id, data)
 			if (!updatedProduct)
 				return res.json({ failure: 'Failed while updating product' })
+
+			const exchangeRate = 19700 // Bu USD ni UZS ga nisbati. 18.01.2026 shu sanada.
+			const amountInUSD = updatedProduct.price / exchangeRate
+			const price = await stripe.prices.create({
+				product: updatedProduct.stripeProductId,
+				unit_amount: amountInUSD.toFixed(0) * 100,
+				currency: 'usd',
+				metadata: {
+					productId: updatedProduct._id.toString(),
+					userId: userId.toString(),
+				},
+			})
+			await productModel.findByIdAndUpdate(updatedProduct._id, {
+				stripePriceId: price.id,
+			})
 			return res.json({ status: 200 })
 		} catch (error) {
 			next(error)
@@ -299,9 +342,10 @@ class AdminController {
 	async deleteProduct(req, res, next) {
 		try {
 			const { id } = req.params
-			const deletedProduct = await productModel.findByIdAndDelete(id)
-			if (!deletedProduct)
-				return res.json({ failure: 'Failed while deleting product' })
+			const product = await productModel.findById(id)
+			await stripe.prices.update(product.stripePriceId, { active: false })
+			await stripe.products.update(product.stripeProductId, { active: false })
+			await productModel.findByIdAndDelete(id)
 			return res.json({ status: 203 })
 		} catch (error) {
 			next(error)
