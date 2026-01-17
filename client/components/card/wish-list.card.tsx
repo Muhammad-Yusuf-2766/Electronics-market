@@ -1,10 +1,13 @@
 'use client'
 
+import { deleteFavorite } from '@/actions/user.action'
+import useAction from '@/hooks/use-action'
 import { formatPrice } from '@/lib/utils'
 import { IProduct } from '@/types'
 import { Heart } from 'lucide-react'
 import Image from 'next/image'
 import { FC, useEffect, useState } from 'react'
+import { toast } from 'sonner'
 import { Button } from '../ui/button'
 
 interface Props {
@@ -12,6 +15,22 @@ interface Props {
 }
 const WishListCard: FC<Props> = ({ product }) => {
 	const [ismounted, setIsMounted] = useState(false)
+	const { isLoading, onError, setIsLoading } = useAction()
+
+	async function onDelete() {
+		setIsLoading(true)
+		const res = await deleteFavorite({ id: product._id! })
+		if (res?.serverError || res?.validationErrors || !res?.data) {
+			return onError('Something went wrong')
+		}
+		if (res.data.failure) {
+			return onError(res.data.failure)
+		}
+		if (res.data.status === 200) {
+			toast.success('Product removed from watchlist')
+			setIsLoading(false)
+		}
+	}
 
 	useEffect(() => {
 		setIsMounted(true)
@@ -27,7 +46,12 @@ const WishListCard: FC<Props> = ({ product }) => {
 					alt={product.title!}
 				/>
 				<div className='absolute right-0 top-0 z-50 flex items-center'>
-					<Button type='button' size={'icon'}>
+					<Button
+						type='button'
+						size={'icon'}
+						onClick={onDelete}
+						disabled={isLoading}
+					>
 						<Heart className='text-red-500 fill-red-500' />
 					</Button>
 				</div>
@@ -40,7 +64,7 @@ const WishListCard: FC<Props> = ({ product }) => {
 						<p className='font-medium'>{formatPrice(+product.price!)}</p>
 					)}
 				</div>
-				<p className='text-xs text-muted-foreground leading-1 line-clamp-5'>
+				<p className='text-xs text-muted-foreground line-clamp-5'>
 					{product.description}
 				</p>
 			</div>

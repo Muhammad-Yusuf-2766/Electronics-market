@@ -66,9 +66,57 @@ class UserController {
 	// [GET] /user/orders
 	async getOrders(req, res, next) {
 		try {
-			const userId = '67420187ce7f12bf6ec22428'
-			const orders = await orderModel.find({ user: userId })
-			return res.json(orders)
+			const currentUser = req.user
+			// 1: Req queries
+			const { searchQuery, filter, page, pageSize } = req.query
+			const skipAmount = (+page - 1) * +pageSize
+			const matchQuery = { user: currentUser._id }
+
+			// 2: Query implementations
+			if (searchQuery) {
+				const escapedSearchQuery = searchQuery.replace(
+					/[.*+?^${}()|[\]\\]/g,
+					'\\$&'
+				)
+				matchQuery.$or = [
+					{ 'product.title': { $regex: new RegExp(escapedSearchQuery, 'i') } },
+				]
+			}
+
+			// 3: Sort options
+			let sortOptions = { createdAt: -1 }
+			if (filter === 'newest') sortOptions = { createdAt: -1 }
+			else if (filter === 'oldest') sortOptions = { createdAt: 1 }
+			const orders = await orderModel.aggregate([
+				{
+					$lookup: {
+						from: 'products',
+						localField: 'product',
+						foreignField: '_id',
+						as: 'product',
+					},
+				},
+				{ $unwind: '$product' },
+				{ $match: matchQuery },
+
+				{ $sort: sortOptions },
+				{ $skip: skipAmount },
+				{ $limit: +pageSize },
+				{
+					$project: {
+						'product.title': 1,
+						createdAt: 1,
+						updatedAt: 1,
+						price: 1,
+						status: 1,
+					},
+				},
+			])
+
+			const totalOrders = await orderModel.countDocuments(matchQuery)
+			const isNext = totalOrders > skipAmount + orders.length
+
+			return res.json({ orders, isNext })
 		} catch (error) {
 			next(error)
 		}
@@ -76,19 +124,109 @@ class UserController {
 	// [GET] /user/transactions
 	async getTransactions(req, res, next) {
 		try {
-			const userId = '67420187ce7f12bf6ec22428'
-			const transactions = await transactionModel.find({ user: userId })
-			return res.json(transactions)
+			const currentUser = req.user
+			// 1: Req queries
+			const { searchQuery, filter, page, pageSize } = req.query
+			const skipAmount = (+page - 1) * +pageSize
+			const matchQuery = { user: currentUser._id }
+
+			// 2: Query implementations
+			if (searchQuery) {
+				const escapedSearchQuery = searchQuery.replace(
+					/[.*+?^${}()|[\]\\]/g,
+					'\\$&'
+				)
+				matchQuery.$or = [
+					{ 'product.title': { $regex: new RegExp(escapedSearchQuery, 'i') } },
+				]
+			}
+
+			// 3: Sort options
+			let sortOptions = { createdAt: -1 }
+			if (filter === 'newest') sortOptions = { createdAt: -1 }
+			else if (filter === 'oldest') sortOptions = { createdAt: 1 }
+
+			const transactions = await transactionModel.aggregate([
+				{
+					$lookup: {
+						from: 'products',
+						localField: 'product',
+						foreignField: '_id',
+						as: 'product',
+					},
+				},
+				{ $unwind: '$product' },
+				{ $match: matchQuery },
+				{ $sort: sortOptions },
+				{ $skip: skipAmount },
+				{ $limit: +pageSize },
+				{
+					$project: {
+						'product.title': 1,
+						'product.category': 1,
+						'product.price': 1,
+						amount: 1,
+						state: 1,
+						create_time: 1,
+						perform_time: 1,
+						cancel_time: 1,
+						reaso: 1,
+						provider: 1,
+					},
+				},
+			])
+
+			const totalTransactions = await transactionModel.countDocuments(
+				matchQuery
+			)
+			const isNext = totalTransactions > skipAmount + transactions.length
+
+			return res.json({ transactions, isNext })
 		} catch (error) {
 			next(error)
 		}
 	}
 	// [GET] /user/favorites
-	async getFavorites(req, res, next) {
+	async getFavourites(req, res, next) {
 		try {
-			const userId = '67420187ce7f12bf6ec22428'
-			const user = await userModel.findById(userId).populate('favorites')
-			return res.json(user.favorites)
+			const currentUser = req.user
+			// 1: Req queries
+			const { searchQuery, filter, category, page, pageSize } = req.query
+			const skipAmount = (+page - 1) * +pageSize
+
+			const user = await userModel.findById(currentUser._id)
+			const matchQuery = { _id: { $in: user.favorites } }
+
+			// 2: Query implementations
+			if (searchQuery) {
+				const escapedSearchQuery = searchQuery.replace(
+					/[.*+?^${}()|[\]\\]/g,
+					'\\$&'
+				)
+				matchQuery.$or = [
+					{ title: { $regex: new RegExp(escapedSearchQuery, 'i') } },
+				]
+			}
+
+			if (category === 'All') matchQuery.category = { $exists: true }
+			else if (category !== 'All') {
+				if (category) matchQuery.category = category
+			}
+
+			// 3: Sort options
+			let sortOptions = { createdAt: -1 }
+			if (filter === 'newest') sortOptions = { createdAt: -1 }
+			else if (filter === 'oldest') sortOptions = { createdAt: 1 }
+
+			const products = await productModel
+				.find(matchQuery)
+				.sort(sortOptions)
+				.skip(skipAmount)
+				.limit(+pageSize)
+
+			const totalProducts = await productModel.countDocuments(matchQuery)
+			const isNext = totalProducts > skipAmount + +products.length
+			return res.json({ products, isNext })
 		} catch (error) {
 			next(error)
 		}
@@ -168,7 +306,7 @@ class UserController {
 			const user = await userModel.findById(userId)
 			user.favorites.pull(id)
 			await user.save()
-			return res.json({ success: 'Product removed from favorites' })
+			return res.json({ status: 200 })
 		} catch (error) {
 			next(error)
 		}

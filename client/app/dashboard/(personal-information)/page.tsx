@@ -10,7 +10,6 @@ const Page = async () => {
 	const res = await getStatistics()
 
 	const statistics = res?.data?.statistics
-	console.log('stst', statistics)
 	return (
 		<>
 			<h1 className='text-xl font-semibold'>Personal information</h1>

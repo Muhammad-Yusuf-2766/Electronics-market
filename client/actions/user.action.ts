@@ -41,6 +41,54 @@ export const getStatistics = actionClient.action<ReturnActionType>(async () => {
 	return JSON.parse(JSON.stringify(data))
 })
 
+export const getOrders = actionClient
+	.inputSchema(searchParamsSchema)
+	.action<ReturnActionType>(async ({ parsedInput }) => {
+		const session = await getServerSession(authOptions)
+		if (!session?.currentUser) {
+			throw new Error('Current user is not found, please login.')
+		}
+		const token = await generateToken(session?.currentUser?._id)
+		const { data } = await axiosClient.get('/user/orders', {
+			headers: { Authorization: `Bearer ${token}` },
+			params: parsedInput,
+		})
+
+		return JSON.parse(JSON.stringify(data))
+	})
+
+export const getTransactions = actionClient
+	.inputSchema(searchParamsSchema)
+	.action<ReturnActionType>(async ({ parsedInput }) => {
+		const session = await getServerSession(authOptions)
+		if (!session?.currentUser) {
+			throw new Error('Current user is not found, please login.')
+		}
+		const token = await generateToken(session?.currentUser?._id)
+		const { data } = await axiosClient.get('/user/transactions', {
+			headers: { Authorization: `Bearer ${token}` },
+			params: parsedInput,
+		})
+
+		return JSON.parse(JSON.stringify(data))
+	})
+
+export const getFavourites = actionClient
+	.inputSchema(searchParamsSchema)
+	.action<ReturnActionType>(async ({ parsedInput }) => {
+		const session = await getServerSession(authOptions)
+		if (!session?.currentUser) {
+			throw new Error('Current user is not found, please login.')
+		}
+		const token = await generateToken(session?.currentUser?._id)
+		const { data } = await axiosClient.get('/user/favourites', {
+			headers: { Authorization: `Bearer ${token}` },
+			params: parsedInput,
+		})
+
+		return JSON.parse(JSON.stringify(data))
+	})
+
 export const addFavorite = actionClient
 	.inputSchema(idSchema)
 	.action<ReturnActionType>(async ({ parsedInput }) => {
@@ -75,7 +123,7 @@ export const updateUser = actionClient
 	})
 
 export const updatePassword = actionClient
-	.schema(passwordSchema)
+	.inputSchema(passwordSchema)
 	.action<ReturnActionType>(async ({ parsedInput }) => {
 		const session = await getServerSession(authOptions)
 		if (!session?.currentUser)
@@ -88,5 +136,22 @@ export const updatePassword = actionClient
 				headers: { Authorization: `Bearer ${token}` },
 			}
 		)
+		return JSON.parse(JSON.stringify(data))
+	})
+
+export const deleteFavorite = actionClient
+	.inputSchema(idSchema)
+	.action<ReturnActionType>(async ({ parsedInput }) => {
+		const session = await getServerSession(authOptions)
+		if (!session?.currentUser)
+			return { failure: 'You must be logged in to add a favorite' }
+		const token = await generateToken(session?.currentUser?._id)
+		const { data } = await axiosClient.delete(
+			`/user/delete-favorite/${parsedInput.id}`,
+			{
+				headers: { Authorization: `Bearer ${token}` },
+			}
+		)
+		revalidatePath('/dashboard/watch-list')
 		return JSON.parse(JSON.stringify(data))
 	})

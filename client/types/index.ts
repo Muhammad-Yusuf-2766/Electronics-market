@@ -66,7 +66,7 @@ export interface IOrder {
 }
 
 export interface ITransactions {
-	id: string
+	_id: string
 	user: IUser
 	product: IProduct
 	state: number

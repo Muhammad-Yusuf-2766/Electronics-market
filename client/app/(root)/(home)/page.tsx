@@ -20,8 +20,6 @@ const HomePage: FC<Props> = async props => {
 		page: `${searchParams.page || '1'}`,
 	})
 
-	console.log('REQ:', res.data?.products)
-
 	const products = res?.data?.products
 	const isNext = res?.data?.isNext || false
 	return (

@@ -1,4 +1,6 @@
+import { getTransactions } from '@/actions/user.action'
 import Filter from '@/components/shared/filter'
+import Pagination from '@/components/shared/pagination'
 import { Separator } from '@/components/ui/separator'
 import {
 	Table,
@@ -9,10 +11,25 @@ import {
 	TableHeader,
 	TableRow,
 } from '@/components/ui/table'
-import { products } from '@/lib/constants'
 import { formatPrice } from '@/lib/utils'
+import { SearchParams } from '@/types'
+import { FC } from 'react'
 
-const PaymentsPage = () => {
+interface Props {
+	searchParams: SearchParams
+}
+
+const PaymentsPage: FC<Props> = async props => {
+	const searchParams = await props.searchParams
+
+	const res = await getTransactions({
+		searchQuery: `${searchParams.q || ''}`,
+		filter: `${searchParams.filter || ''}`,
+		page: `${searchParams.page || '1'}`,
+	})
+
+	const transactions = res.data?.transactions
+	const isNext = res.data?.isNext || false
 	return (
 		<>
 			<div className='flex justify-between items-center w-full'>
@@ -23,29 +40,41 @@ const PaymentsPage = () => {
 			<Separator className='my-3' />
 
 			<Table className='text-sm'>
-				<TableCaption>A list of your recent payments.</TableCaption>
+				{transactions && transactions.length > 0 && (
+					<TableCaption>A list of your recent transactions.</TableCaption>
+				)}
 				<TableHeader>
-					<TableRow>
+					<TableRow className='bg-secondary'>
 						<TableHead>Product</TableHead>
 						<TableHead>Provider</TableHead>
 						<TableHead>Status</TableHead>
-						<TableHead className='text-right'>Price</TableHead>
+						<TableHead>Price</TableHead>
 					</TableRow>
 				</TableHeader>
 				<TableBody>
-					{products.map(product => (
-						<TableRow key={product._id}>
-							<TableCell>{formatPrice(product.price)}</TableCell>
-							<TableCell>Toss bank</TableCell>
-							<TableCell>{product.title}</TableCell>
-							<TableCell>10-Nov 2024</TableCell>
-							<TableCell className='text-right'>
-								{formatPrice(product.price)}
+					{transactions && transactions.length === 0 && (
+						<TableRow>
+							<TableCell colSpan={4} className='text-center'>
+								No transactions found
 							</TableCell>
 						</TableRow>
-					))}
+					)}
+					{transactions &&
+						transactions.map(transaction => (
+							<TableRow key={transaction._id}>
+								<TableCell>{transaction.product.title}</TableCell>
+								<TableCell>{transaction.provider}</TableCell>
+								<TableCell>{transaction.state}</TableCell>
+								<TableCell>{formatPrice(transaction.amount)}</TableCell>
+							</TableRow>
+						))}
 				</TableBody>
 			</Table>
+
+			<Pagination
+				isNext={isNext}
+				pageNumber={searchParams?.page ? +searchParams.page : 1}
+			/>
 		</>
 	)
 }
