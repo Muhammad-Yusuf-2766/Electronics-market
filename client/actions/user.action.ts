@@ -99,7 +99,22 @@ export const addFavorite = actionClient
 		const { data } = await axiosClient.post(
 			'/user/add-favorite',
 			{ productId: parsedInput.id },
-			{ headers: { Authorization: `Bearer ${token}` } }
+			{ headers: { Authorization: `Bearer ${token}` } },
+		)
+		return JSON.parse(JSON.stringify(data))
+	})
+
+export const stripeCheckout = actionClient
+	.inputSchema(idSchema)
+	.action<ReturnActionType>(async ({ parsedInput }) => {
+		const session = await getServerSession(authOptions)
+		if (!session?.currentUser)
+			return { failure: 'You must be logged in to add a favorite' }
+		const token = await generateToken(session?.currentUser?._id)
+		const { data } = await axiosClient.post(
+			'/user/stripe/checkout',
+			{ productId: parsedInput.id },
+			{ headers: { Authorization: `Bearer ${token}` } },
 		)
 		return JSON.parse(JSON.stringify(data))
 	})
@@ -116,7 +131,7 @@ export const updateUser = actionClient
 			parsedInput,
 			{
 				headers: { Authorization: `Bearer ${token}` },
-			}
+			},
 		)
 		revalidatePath('/dashboard')
 		return JSON.parse(JSON.stringify(data))
@@ -134,7 +149,7 @@ export const updatePassword = actionClient
 			parsedInput,
 			{
 				headers: { Authorization: `Bearer ${token}` },
-			}
+			},
 		)
 		return JSON.parse(JSON.stringify(data))
 	})
@@ -150,7 +165,7 @@ export const deleteFavorite = actionClient
 			`/user/delete-favorite/${parsedInput.id}`,
 			{
 				headers: { Authorization: `Bearer ${token}` },
-			}
+			},
 		)
 		revalidatePath('/dashboard/watch-list')
 		return JSON.parse(JSON.stringify(data))

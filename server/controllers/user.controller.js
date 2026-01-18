@@ -3,6 +3,8 @@ const productModel = require('../models/product.model')
 const userModel = require('../models/user.model')
 const transactionModel = require('../models/transaction.model')
 const bcrypt = require('bcrypt')
+const { getCustomer } = require('../lib/customer')
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY)
 
 class UserController {
 	// [GET] /user/products
@@ -15,7 +17,7 @@ class UserController {
 			if (searchQuery) {
 				const escapedSearchQuery = searchQuery.replace(
 					/[.*+?^${}()|[\]\\]/g,
-					'\\$&'
+					'\\$&',
 				)
 				query.$or = [{ title: { $regex: new RegExp(escapedSearchQuery, 'i') } }]
 			}
@@ -75,7 +77,7 @@ class UserController {
 			if (searchQuery) {
 				const escapedSearchQuery = searchQuery.replace(
 					/[.*+?^${}()|[\]\\]/g,
-					'\\$&'
+					'\\$&',
 				)
 				matchQuery.$or = [
 					{ 'product.title': { $regex: new RegExp(escapedSearchQuery, 'i') } },
@@ -133,7 +135,7 @@ class UserController {
 			if (searchQuery) {
 				const escapedSearchQuery = searchQuery.replace(
 					/[.*+?^${}()|[\]\\]/g,
-					'\\$&'
+					'\\$&',
 				)
 				matchQuery.$or = [
 					{ 'product.title': { $regex: new RegExp(escapedSearchQuery, 'i') } },
@@ -175,9 +177,8 @@ class UserController {
 				},
 			])
 
-			const totalTransactions = await transactionModel.countDocuments(
-				matchQuery
-			)
+			const totalTransactions =
+				await transactionModel.countDocuments(matchQuery)
 			const isNext = totalTransactions > skipAmount + transactions.length
 
 			return res.json({ transactions, isNext })
@@ -200,7 +201,7 @@ class UserController {
 			if (searchQuery) {
 				const escapedSearchQuery = searchQuery.replace(
 					/[.*+?^${}()|[\]\\]/g,
-					'\\$&'
+					'\\$&',
 				)
 				matchQuery.$or = [
 					{ title: { $regex: new RegExp(escapedSearchQuery, 'i') } },
@@ -266,6 +267,36 @@ class UserController {
 			next(error)
 		}
 	}
+
+	// [POST] /user/stripe/checkout
+	async stripeCheckout(req, res, next) {
+		try {
+			const { productId } = req.body
+			const currentUser = req.user
+			const customer = await getCustomer(currentUser._id)
+			const product = await productModel.findById(productId)
+
+			const session = await stripe.checkout.sessions.create({
+				payment_method_types: ['card'],
+				customer: customer.id,
+				mode: 'payment',
+				metadata: {
+					productId: product._id.toString(),
+					userId: currentUser._id.toString(),
+				},
+				line_items: [{ price: product.stripePriceId, quantity: 1 }],
+				success_url: `${process.env.CLIENT_URL}/success?productId=${product._id}&userId=${currentUser._id}`,
+				cancel_url: `${process.env.CLIENT_URL}/cancel?productId=${product._id}&userId=${currentUser._id}`,
+			})
+
+			return res.json({ status: 200, checkoutUrl: session.url })
+		} catch (error) {
+			console.log(error)
+
+			next(error)
+		}
+	}
+
 	// [PUT] /user/update-profile
 	async updateProfile(req, res, next) {
 		try {

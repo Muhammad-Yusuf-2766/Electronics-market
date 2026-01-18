@@ -33,6 +33,7 @@ export interface ReturnActionType {
 	customers: IUser[]
 	orders: IOrder[]
 	transactions: ITransactions[]
+	checkoutUrl: string
 	statistics: {
 		totalOrders: number
 		totalTransactions: number

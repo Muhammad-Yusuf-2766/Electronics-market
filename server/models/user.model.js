@@ -13,7 +13,7 @@ const userSchema = new Schema(
 		favorites: [{ type: Schema.Types.ObjectId, ref: 'Product' }],
 		customerId: { type: String },
 	},
-	{ timestamps: true }
+	{ timestamps: true },
 )
 
 module.exports = model('User', userSchema)

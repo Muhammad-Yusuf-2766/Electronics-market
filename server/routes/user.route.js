@@ -12,6 +12,7 @@ router.get('/favourites', userMiddleware, userController.getFavourites)
 router.get('/statistics', userMiddleware, userController.getStatistics)
 
 router.post('/add-favorite', userMiddleware, userController.addFavorite)
+router.post('/stripe/checkout', userMiddleware, userController.stripeCheckout)
 
 router.put('/update-profile', userMiddleware, userController.updateProfile)
 router.put('/update-password', userMiddleware, userController.updatePassword)
@@ -19,7 +20,7 @@ router.put('/update-password', userMiddleware, userController.updatePassword)
 router.delete(
 	'/delete-favorite/:id',
 	userMiddleware,
-	userController.deleteFavorite
+	userController.deleteFavorite,
 )
 
 module.exports = router
